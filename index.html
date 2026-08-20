@@ -54,7 +54,7 @@
         <option value="organic">Organic</option>
         <option value="paper">Paper</option>
         <option value="metal">Metal</option>
-        <option value="hazardous">Hazardous / E-Waste</option>
+        <option value="hazardous">Hazardous / Biomedical & E-Waste</option>
       </select>
 
       <button id="bookPickupBtn" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
@@ -112,6 +112,9 @@
           </button>
           <button type="button" onclick="loadSampleImage('plastic')" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1.5 rounded-lg border border-blue-300 font-medium transition">
             🔵 Blue Bin (Dry Plastic Bottle)
+          </button>
+          <button type="button" onclick="loadSampleImage('biomedical')" class="text-xs bg-rose-100 hover:bg-rose-200 text-rose-800 px-3 py-1.5 rounded-lg border border-rose-300 font-medium transition">
+            ☣️ Red Bin (Biomedical Waste / Syringe)
           </button>
           <button type="button" onclick="loadSampleImage('hazardous')" class="text-xs bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded-lg border border-red-300 font-medium transition">
             🔴 Red Bin (Hazardous / E-Waste)
@@ -219,6 +222,7 @@
       <option value="Food Waste">Food Waste</option>
       <option value="Cardboard Box">Cardboard Box</option>
       <option value="Old Battery">Old Battery</option>
+      <option value="Biomedical Waste">Biomedical Waste (Syringe/Mask)</option>
     </select>
     <p id="wasteTip" class="text-gray-700 font-medium"></p>
   </section>

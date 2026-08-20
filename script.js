@@ -72,7 +72,7 @@ function updateInstructionText(typeVal, element) {
       element.textContent = "⚙️ Rinse and store metal cans or tins safely to prevent injury.";
       break;
     case "hazardous":
-      element.textContent = "⚠️ Keep batteries/e-waste separate in a red bin to prevent toxic chemical leak.";
+      element.textContent = "☣️ Keep biomedical waste (syringes, masks, gloves, pills) & e-waste separate in red/yellow biohazard bins.";
       break;
     default:
       element.textContent = "ℹ️ Please ensure waste is properly segregated before pickup.";
@@ -87,7 +87,8 @@ function initKnowYourWaste() {
     "Plastic Bottle": "Recycle it in the dry/blue plastic bin. Avoid burning — it releases toxic fumes.",
     "Food Waste": "Compost if possible! Wet waste generates nutrient-rich natural fertilizer.",
     "Cardboard Box": "Flatten completely and recycle with clean paper waste in the blue bin.",
-    "Old Battery": "Do NOT throw in regular household bins — deposit at e-waste collection centers or red hazardous bins."
+    "Old Battery": "Do NOT throw in regular household bins — deposit at e-waste collection centers or red hazardous bins.",
+    "Biomedical Waste": "Do NOT throw in regular bins! Segregate syringes, needles, masks, gloves, and expired pills in sealed red/yellow biohazard bins to prevent infection & injury."
   };
 
   const select = document.getElementById('wasteItem');
@@ -134,6 +135,8 @@ function categorizeWaste() {
 
   if (!input) {
     result.textContent = '⚠️ Please enter an item name.';
+  } else if (input.includes('syringe') || input.includes('mask') || input.includes('glove') || input.includes('medical') || input.includes('biomedical') || input.includes('medicine') || input.includes('pill') || input.includes('needle') || input.includes('gauze') || input.includes('biohazard') || input.includes('bandage') || input.includes('vial') || input.includes('blood') || input.includes('sanitizer') || input.includes('hospital')) {
+    category = 'Hazardous / Biomedical Waste ☣️ — Dispose in Red/Yellow Biohazard Bin';
   } else if (input.includes('plastic') || input.includes('bottle') || input.includes('wrapper') || input.includes('poly')) {
     category = 'Non-biodegradable (Plastic) ♻️ — Dispose in Blue Bin';
   } else if (input.includes('banana') || input.includes('food') || input.includes('leaf') || input.includes('peel') || input.includes('vegetable') || input.includes('fruit')) {
@@ -219,6 +222,14 @@ function loadSampleImage(sampleType) {
       <rect x="130" y="55" width="40" height="25" rx="5" fill="#93c5fd"/>
       <text x="50%" y="88%" font-family="sans-serif" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">BLUE BIN - DRY PLASTIC</text>
     </svg>`;
+  } else if (sampleType === 'biomedical') {
+    svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+      <rect width="100%" height="100%" fill="#e11d48"/>
+      <circle cx="150" cy="130" r="55" fill="#be123c"/>
+      <line x1="150" y1="95" x2="150" y2="165" stroke="#fef2f2" stroke-width="18" stroke-linecap="round"/>
+      <line x1="115" y1="130" x2="185" y2="130" stroke="#fef2f2" stroke-width="18" stroke-linecap="round"/>
+      <text x="50%" y="88%" font-family="sans-serif" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">RED BIN - BIOMEDICAL WASTE</text>
+    </svg>`;
   } else if (sampleType === 'hazardous') {
     svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
       <rect width="100%" height="100%" fill="#ef4444"/>
@@ -282,7 +293,7 @@ async function analyzeImage(imageSrc, forcedTypeHint) {
   };
 }
 
-// Canvas RGB Extraction and Ratio Analysis
+// Canvas RGB & HSL Color Extraction and Ratio Analysis
 function analyzeCanvasColors(imgElement) {
   const canvas = document.getElementById("analysisCanvas");
   const ctx = canvas.getContext("2d");
@@ -296,12 +307,13 @@ function analyzeCanvasColors(imgElement) {
     imageData = ctx.getImageData(0, 0, 100, 100).data;
   } catch (e) {
     // Cross-origin SVG fallback
-    return { greenRatio: 25, blueRatio: 25, redRatio: 25, neutralRatio: 25 };
+    return { greenRatio: 30, yellowBrownRatio: 30, blueRatio: 20, redRatio: 10, neutralRatio: 10, organicTotalRatio: 60 };
   }
 
   let greenPixels = 0;
+  let yellowBrownPixels = 0;
   let bluePixels = 0;
-  let redPixels = 0;
+  let redHazardousPixels = 0;
   let neutralPixels = 0;
   let totalPixels = imageData.length / 4;
 
@@ -310,37 +322,84 @@ function analyzeCanvasColors(imgElement) {
     const g = imageData[i + 1];
     const b = imageData[i + 2];
 
-    if (g > r + 15 && g > b + 15) {
+    // 1. Green Spectrum (Lush leaves, fresh vegetables, green peels)
+    if (g > r + 10 && g > b + 15) {
       greenPixels++;
-    } else if (b > r + 15 && b > g + 15) {
+    } 
+    // 2. Yellow & Brown Organic Spectrum (Banana peels, cooked food, tea leaves, compost, fruits)
+    // Yellow has R & G both high (R>120, G>100) and B low. Brown has R > G and G > B.
+    else if ((r > 120 && g > 100 && b < Math.min(r, g) - 25) || (r > g && g > b + 5 && r < 230 && b < 110)) {
+      yellowBrownPixels++;
+    }
+    // 3. Blue / Cyan Spectrum (Dry plastic containers, water bottles, packaging)
+    else if (b > r + 15 && b > g + 10) {
       bluePixels++;
-    } else if (r > g + 20 && r > b + 20) {
-      redPixels++;
-    } else {
+    } 
+    // 4. Pure Vivid Red Spectrum (Hazardous warning bins, batteries, chemicals)
+    // Must be strictly VIVID RED (R > G + 50 AND R > B + 50) so yellow/brown food is NOT counted as red!
+    else if (r > g + 50 && r > b + 50 && r > 140) {
+      redHazardousPixels++;
+    } 
+    // 5. Neutral / Gray / Paper / Cardboard
+    else {
       neutralPixels++;
     }
   }
 
+  const greenRatio = Math.round((greenPixels / totalPixels) * 100);
+  const yellowBrownRatio = Math.round((yellowBrownPixels / totalPixels) * 100);
+  const blueRatio = Math.round((bluePixels / totalPixels) * 100);
+  const redRatio = Math.round((redHazardousPixels / totalPixels) * 100);
+  const neutralRatio = Math.round((neutralPixels / totalPixels) * 100);
+  const organicTotalRatio = greenRatio + yellowBrownRatio;
+
   return {
-    greenRatio: Math.round((greenPixels / totalPixels) * 100),
-    blueRatio: Math.round((bluePixels / totalPixels) * 100),
-    redRatio: Math.round((redPixels / totalPixels) * 100),
-    neutralRatio: Math.round((neutralPixels / totalPixels) * 100)
+    greenRatio,
+    yellowBrownRatio,
+    blueRatio,
+    redRatio,
+    neutralRatio,
+    organicTotalRatio
   };
 }
 
 // Map TensorFlow ImageNet labels to Waste Categories
 function mapMLPredictionToCategory(predictions) {
-  const organicKeywords = ['banana', 'apple', 'orange', 'broccoli', 'cabbage', 'strawberry', 'pineapple', 'cucumber', 'lemon', 'mushroom', 'food', 'produce', 'salad', 'fruit', 'vegetable', 'leaf'];
-  const plasticKeywords = ['water bottle', 'pop bottle', 'bottle', 'plastic', 'bucket', 'container', 'tub', 'cup', 'wrapper', 'bag'];
-  const paperKeywords = ['carton', 'cardboard', 'packet', 'envelope', 'book', 'paper', 'binder', 'box'];
-  const metalKeywords = ['can', 'tin', 'aluminum', 'brass', 'steel', 'thimble'];
-  const hazardousKeywords = ['battery', 'cell', 'syringe', 'flashlight', 'electronic', 'plug', 'wire', 'lighter'];
+  const hazardousKeywords = [
+    'battery', 'cell', 'syringe', 'needle', 'medical', 'medicine', 'pill', 'pill bottle', 
+    'capsule', 'bandage', 'gauze', 'iv bag', 'biohazard', 'vial', 'phial', 'blister pack', 
+    'thermometer', 'sanitizer', 'disinfectant', 'swab', 'cotton swab', 'scalpel', 'blood', 
+    'crutch', 'wheelchair', 'stethoscope', 'first aid', 'enema', 'ointment', 'latex', 
+    'hypodermic', 'hospital', 'mask', 'glove', 'flashlight', 'electronic', 'plug', 'wire', 
+    'lighter', 'switch', 'beaker', 'flask', 'laboratory'
+  ];
+  const organicKeywords = [
+    'banana', 'peel', 'apple', 'orange', 'broccoli', 'cabbage', 'strawberry', 'pineapple', 
+    'cucumber', 'lemon', 'mushroom', 'food', 'produce', 'salad', 'fruit', 'vegetable', 
+    'leaf', 'bread', 'pot', 'plant', 'flower', 'seed', 'tea', 'coffee', 'nut', 'corn', 
+    'squash', 'potato', 'onion', 'soup', 'dish', 'plate', 'meat', 'chicken', 'pizza', 
+    'sandwich', 'bagel', 'zucchini', 'garlic', 'guacamole', 'pomegranate', 'fig', 'jackfruit', 
+    'guava', 'mango', 'grape', 'pear', 'peach', 'plum', 'cauliflower', 'artichoke', 'head cabbage'
+  ];
+  const plasticKeywords = [
+    'water bottle', 'pop bottle', 'bottle', 'plastic', 'bucket', 'container', 'tub', 
+    'cup', 'wrapper', 'bag', 'lotion bottle', 'jug', 'water jug'
+  ];
+  const paperKeywords = [
+    'carton', 'cardboard', 'packet', 'envelope', 'book', 'paper', 'binder', 'box', 'toilet tissue'
+  ];
+  const metalKeywords = [
+    'can', 'tin', 'aluminum', 'brass', 'steel', 'thimble', 'can opener', 'wok', 'frying pan'
+  ];
 
   for (let p of predictions) {
     const label = p.className.toLowerCase();
     const conf = Math.round(p.probability * 100);
 
+    // PRIORITIZE HAZARDOUS & BIOMEDICAL CHECK FIRST (before general plastic)
+    if (hazardousKeywords.some(k => label.includes(k))) {
+      return { categoryKey: 'hazardous', title: 'Hazardous / Biomedical Waste ☣️', label: p.className, conf };
+    }
     if (organicKeywords.some(k => label.includes(k))) {
       return { categoryKey: 'organic', title: 'Biodegradable (Organic Waste)', label: p.className, conf };
     }
@@ -353,9 +412,6 @@ function mapMLPredictionToCategory(predictions) {
     if (metalKeywords.some(k => label.includes(k))) {
       return { categoryKey: 'metal', title: 'Recyclable (Metal Waste)', label: p.className, conf };
     }
-    if (hazardousKeywords.some(k => label.includes(k))) {
-      return { categoryKey: 'hazardous', title: 'Hazardous / E-Waste', label: p.className, conf };
-    }
   }
 
   // Top fallback prediction
@@ -366,17 +422,21 @@ function mapMLPredictionToCategory(predictions) {
 function decideHybridCategory(colorMetrics, mlResult, forcedTypeHint) {
   // If quick sample hint is passed directly
   if (forcedTypeHint) {
-    if (forcedTypeHint === 'organic') return buildCategoryObject('organic', '🌱 Biodegradable (Organic Waste)', '🟢 Dump in GREEN Bin (Wet/Organic)', 'Compost organic waste. High green color ratio detected.', '🎨 Rule Engine: Color-Code Green', 'bg-emerald-100 text-emerald-800');
+    if (forcedTypeHint === 'organic') return buildCategoryObject('organic', '🌱 Biodegradable (Organic Waste)', '🟢 Dump in GREEN Bin (Wet/Organic)', 'Compost organic waste. High green/yellow organic spectrum detected.', '🎨 Rule Engine: Color-Code Green', 'bg-emerald-100 text-emerald-800');
     if (forcedTypeHint === 'plastic') return buildCategoryObject('plastic', '♻️ Non-Biodegradable (Plastic)', '🔵 Dump in BLUE Bin (Dry/Recyclable)', 'Rinse and flatten plastics before disposal.', '🎨 Rule Engine: Color-Code Blue', 'bg-blue-100 text-blue-800');
+    if (forcedTypeHint === 'biomedical') return buildCategoryObject('hazardous', '☣️ Hazardous / Biomedical Waste', '🔴 Dump in RED/YELLOW Bin (Biomedical Waste)', 'Segregate syringes, masks, gloves, and medicine in biohazard bins.', '🎨 Rule Engine: Color-Code Red/Yellow', 'bg-rose-100 text-rose-800 border border-rose-300');
     if (forcedTypeHint === 'hazardous') return buildCategoryObject('hazardous', '⚠️ Hazardous / E-Waste', '🔴 Dump in RED Bin (Hazardous)', 'Do not mix with regular bins. Deposit at e-waste center.', '🎨 Rule Engine: Color-Code Red', 'bg-red-100 text-red-800');
     if (forcedTypeHint === 'paper') return buildCategoryObject('paper', '📦 Recyclable (Paper & Cardboard)', '🔵 Dump in BLUE Bin (Paper/Dry)', 'Keep dry and flatten boxes.', '🎨 Rule Engine: Color-Code Neutral', 'bg-amber-100 text-amber-800');
   }
 
-  // High confidence ML model match
-  if (mlResult && mlResult.categoryKey !== 'unknown' && mlResult.conf >= 30) {
+  // ML Model Result (Threshold 15% for organic food/peel items or medical items)
+  if (mlResult && mlResult.categoryKey !== 'unknown' && mlResult.conf >= 15) {
     lastDetectedCategoryKey = mlResult.categoryKey;
     const badgeText = `🤖 ML MobileNet (${mlResult.conf}% - "${mlResult.label}")`;
 
+    if (mlResult.categoryKey === 'hazardous') {
+      return buildCategoryObject('hazardous', '☣️ ' + mlResult.title, '🔴 Dump in RED/YELLOW Bin (Biomedical & Hazardous)', 'Segregate syringes, masks, gloves, medicine, and batteries in red/yellow biohazard bins.', badgeText, 'bg-rose-100 text-rose-800 border border-rose-300');
+    }
     if (mlResult.categoryKey === 'organic') {
       return buildCategoryObject('organic', '🌱 ' + mlResult.title, '🟢 Dump in GREEN Bin (Wet Waste)', 'Compost food and organic waste to reduce landfill footprint.', badgeText, 'bg-emerald-100 text-emerald-800 border border-emerald-300');
     }
@@ -389,25 +449,27 @@ function decideHybridCategory(colorMetrics, mlResult, forcedTypeHint) {
     if (mlResult.categoryKey === 'metal') {
       return buildCategoryObject('metal', '🥫 ' + mlResult.title, '🔵 Dump in BLUE Bin (Metals)', 'Store metal cans safely for efficient material recovery.', badgeText, 'bg-cyan-100 text-cyan-800 border border-cyan-300');
     }
-    if (mlResult.categoryKey === 'hazardous') {
-      return buildCategoryObject('hazardous', '⚠️ ' + mlResult.title, '🔴 Dump in RED Bin (Hazardous)', 'Segregate e-waste and chemicals into authorized collection bins.', badgeText, 'bg-red-100 text-red-800 border border-red-300');
-    }
   }
 
   // Fallback to Canvas Color Rule Engine
-  const { greenRatio, blueRatio, redRatio } = colorMetrics;
+  const { organicTotalRatio, blueRatio, redRatio } = colorMetrics;
 
-  if (greenRatio >= 30 || greenRatio > blueRatio && greenRatio > redRatio) {
+  // 1. Organic Wet Waste (Green + Yellow/Brown Spectrum) takes precedence over generic red/neutral
+  if (organicTotalRatio >= 20 || (organicTotalRatio > blueRatio && organicTotalRatio > redRatio)) {
     lastDetectedCategoryKey = 'organic';
-    return buildCategoryObject('organic', '🌱 Biodegradable (Organic Waste)', '🟢 Dump in GREEN Bin (Wet Waste)', 'High green spectrum detected. Ideal for composting.', '🎨 Rule Engine: Green Ratio (' + greenRatio + '%)', 'bg-emerald-100 text-emerald-800 border border-emerald-300');
+    return buildCategoryObject('organic', '🌱 Biodegradable (Organic Waste)', '🟢 Dump in GREEN Bin (Wet Waste)', 'Organic spectrum (Green/Yellow/Brown) detected. Ideal for composting.', `🎨 Rule Engine: Organic Spectrum (${organicTotalRatio}%)`, 'bg-emerald-100 text-emerald-800 border border-emerald-300');
   }
-  if (blueRatio >= 30 || blueRatio > redRatio) {
+
+  // 2. Plastic / Blue Dry Waste
+  if (blueRatio >= 20 || blueRatio > redRatio) {
     lastDetectedCategoryKey = 'plastic';
-    return buildCategoryObject('plastic', '♻️ Non-Biodegradable (Dry Plastic)', '🔵 Dump in BLUE Bin (Dry Waste)', 'High blue spectrum detected. Recycle with dry waste.', '🎨 Rule Engine: Blue Ratio (' + blueRatio + '%)', 'bg-blue-100 text-blue-800 border border-blue-300');
+    return buildCategoryObject('plastic', '♻️ Non-Biodegradable (Dry Plastic)', '🔵 Dump in BLUE Bin (Dry Waste)', 'Blue spectrum detected. Recycle with dry waste.', `🎨 Rule Engine: Blue Ratio (${blueRatio}%)`, 'bg-blue-100 text-blue-800 border border-blue-300');
   }
-  if (redRatio >= 25) {
+
+  // 3. Hazardous Waste (Vivid Red Only - strictly R > G+50 and R > B+50)
+  if (redRatio >= 20) {
     lastDetectedCategoryKey = 'hazardous';
-    return buildCategoryObject('hazardous', '⚠️ Hazardous Waste / E-Waste', '🔴 Dump in RED Bin (Hazardous)', 'High red spectrum detected. Handle with care.', '🎨 Rule Engine: Red Ratio (' + redRatio + '%)', 'bg-red-100 text-red-800 border border-red-300');
+    return buildCategoryObject('hazardous', '⚠️ Hazardous Waste / E-Waste', '🔴 Dump in RED Bin (Hazardous)', 'Vivid red warning spectrum detected. Handle with care.', `🎨 Rule Engine: Red Ratio (${redRatio}%)`, 'bg-red-100 text-red-800 border border-red-300');
   }
 
   // Default Neutral / Mixed Waste

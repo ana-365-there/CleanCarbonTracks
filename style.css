@@ -1,17 +1,22 @@
 /* 🌿 General page style enhancements */
-/* 🌄 Background image with blur and overlay */
+/* ─────────────────────────────────────────────────────────────
+   ROOT FIX: The original code had a duplicate body rule with
+   `color: white !important` that overrode every text element
+   on the page (labels, inputs, dropdowns, file input, etc.)
+   and could not be beaten by Tailwind's text-gray-800 class.
+   That dead rule has been removed and consolidated here.
+   ───────────────────────────────────────────────────────────── */
 body {
-  background: url('https://i.ibb.co/d4mhQpzC/images-1.jpg') no-repeat center center fixed;
-  background-size: cover;
-  color: white !important;
-}
-
-body {
-  background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('https://i.ibb.co/d4mhQpzC/images-1.jpg') no-repeat center center fixed;
+  background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
+              url('https://i.ibb.co/d4mhQpzC/images-1.jpg') no-repeat center center fixed;
   background-size: cover;
   font-family: 'Inter', sans-serif;
   scroll-behavior: smooth;
   min-height: 100vh;
+  /* Explicit dark text so all inherited content is readable
+     against the white-tinted background. Tailwind's text-gray-800
+     on <body> resolves to the same value (#1f2937). */
+  color: #1f2937;
 }
 
 /* 🌈 Soft gradient for the header */
@@ -47,6 +52,39 @@ button:hover {
   transition: box-shadow 0.3s ease;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   🔒 FORM ELEMENT COLOUR SAFETY NET
+   Browsers (especially WebKit/Blink) sometimes inherit color
+   into form controls. These rules pin every interactive element
+   to a readable dark color regardless of any cascade quirk.
+   ───────────────────────────────────────────────────────────── */
+input,
+input[type="text"],
+input[type="file"],
+select,
+option,
+textarea {
+  color: #1f2937;          /* dark gray — same as Tailwind text-gray-800 */
+  background-color: #ffffff;
+}
+
+/* Placeholder text: visible but clearly secondary */
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;          /* Tailwind gray-400 */
+  opacity: 1;              /* Firefox reduces opacity by default */
+}
+
+/* Labels: always dark, never white */
+label {
+  color: #374151;          /* Tailwind gray-700 */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Buttons that carry Tailwind text-white keep their white text;
+   the rule above only targets form controls, not buttons.
+   ───────────────────────────────────────────────────────────── */
+
 /* ♻️ Smart Waste Categorizer styling */
 #wasteInput {
   border: 2px solid #22c55e;
@@ -64,3 +102,69 @@ button:hover {
 }
 
 
+/* ============================================================ */
+/* 🗑️ BIN REPORTING MODULE                                      */
+/* ============================================================ */
+
+/* Dashed green border on the file input — matches wasteInput style language */
+#reportImage {
+  border: 2px dashed #22c55e;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #f0fdf4;
+}
+
+#reportImage:hover {
+  background: #dcfce7;
+  border-color: #16a34a;
+  transition: all 0.2s ease;
+}
+
+/* Image preview thumbnail */
+#imagePreviewContainer img {
+  max-height: 200px;
+  border-radius: 12px;
+  border: 2px solid #22c55e;
+  display: block;
+}
+
+/* Textarea focus ring — matches #wasteInput:focus */
+#reportDesc {
+  border: 2px solid #22c55e;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+#reportDesc:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 5px rgba(22, 163, 74, 0.4);
+}
+
+/* Location input focus ring */
+#reportLocation:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 5px rgba(22, 163, 74, 0.4);
+  outline: none;
+}
+
+/* Report card hover lift — explicit rule for the reports list cards */
+#reportsList > div {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#reportsList > div:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Status badge colours (used in JS-generated HTML) */
+.status-reported {
+  background-color: #fef9c3;
+  color: #a16207;
+}
+
+.status-resolved {
+  background-color: #dcfce7;
+  color: #15803d;
+}

@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'CleanCarbonTracks — Smart Municipal Waste & Carbon Reduction Platform',
+  title: 'Fleet Radar Engine — Real-Time Telematics & Dynamic Route Optimization',
   description:
-    'Track garbage pickups, categorize waste with AI, report sanitation issues, and monitor eco-fleet fuel efficiency.',
+    'Scalable telemetry and radar visualization for moving vehicle fleets with dynamic waypoint tracking, battery monitoring, and fuel optimization telemetry.',
 };
 
 export default function RootLayout({

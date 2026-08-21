@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'CleanCarbonTracks — Smart Municipal Waste & Carbon Reduction Platform',
+  title: 'AI Classification Engine — Universal Item Categorization & Routing Engine',
   description:
-    'Track garbage pickups, categorize waste with AI, report sanitation issues, and monitor eco-fleet fuel efficiency.',
+    'Real-time multi-domain item identification with token matching, confidence estimation, and automated environmental impact metrics.',
 };
 
 export default function RootLayout({

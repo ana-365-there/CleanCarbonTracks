@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'CleanCarbonTracks — Smart Municipal Waste & Carbon Reduction Platform',
+  title: 'Service Scheduling Engine — Multi-Role On-Demand Booking & Dispatch Infrastructure',
   description:
-    'Track garbage pickups, categorize waste with AI, report sanitation issues, and monitor eco-fleet fuel efficiency.',
+    'End-to-end appointment lifecycle management: customer booking portal, incident ticketing desk, operations dispatch queue, and mobile field worker checklist.',
 };
 
 export default function RootLayout({
